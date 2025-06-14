@@ -80,7 +80,7 @@ def process_nodules(xml_file, dicom_folder, output_folder):
         print(f"已保存图片 {output_path}，包含 {len(edge_maps)} 个结节")
 
 if __name__ == "__main__":
-    dicom_folder = r"D:\MyFile\LIDC-IDRI\LIDC-IDRI-0001\1.3.6.1.4.1.14519.5.2.1.6279.6001.298806137288633453246975630178\000000"
+    dicom_folder = r"D:\MyFile\LIDC-IDRI\LIDC-IDRI-0001"
     output_folder = "nodule_contours"
     xml_files = [f for f in os.listdir(dicom_folder) if f.lower().endswith('.xml')]
     if len(xml_files) != 1:
