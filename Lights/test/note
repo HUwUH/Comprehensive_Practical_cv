@@ -294,4 +294,17 @@ SliceThickness: ['0.90', '1.0', '1.50', '2.0', '3.0']
 明天想个办法表示一下中心的点
 
 
+处理: LIDC-IDRI-1009
+跳过: LIDC-IDRI-1009（缺少DICOM或XML）
+处理: LIDC-IDRI-1010
+跳过: LIDC-IDRI-1010（缺少DICOM或XML）
+处理: LIDC-IDRI-1011
+跳过: LIDC-IDRI-1011（缺少DICOM或XML）
+处理: LIDC-IDRI-1012
+跳过: LIDC-IDRI-1012（缺少DICOM或XML）
+
+
+明天得问问给的是什么样子的文件格式，是dicom的图片的还是jpg或者png这些普通格式的
+
+
 

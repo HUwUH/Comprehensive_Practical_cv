@@ -3,7 +3,13 @@ import pydicom
 
 root_dir = r'D:\MyFile\LIDC-IDRI'
 
+a = 1
+
 for lidc_idri_folder in os.listdir(root_dir):
+    # 跳过前1007个文件夹
+    if a <= 1006:
+        a += 1
+        continue
     print(f"Processing LIDC-IDRI Folder: {lidc_idri_folder}")
     if not lidc_idri_folder.startswith("LIDC-IDRI-"):
         print(f"Skipping {lidc_idri_folder}, not a valid LIDC-IDRI folder.")
