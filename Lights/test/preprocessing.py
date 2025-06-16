@@ -27,6 +27,10 @@ def parse_nodules(xml_file, sopuid_to_filename):
             roi = nodule.find('ns:roi', namespace)
             if roi is None:
                 continue
+            image_zposition = roi.find('ns:imageZposition', namespace)
+            if image_zposition is None:
+                continue
+            image_zposition = image_zposition.text
             edge_maps = roi.findall('ns:edgeMap', namespace)
             if not edge_maps:
                 continue
@@ -48,6 +52,7 @@ def parse_nodules(xml_file, sopuid_to_filename):
                     malignancy = int(malignancy_elem.text)
             nodules.append({
                 "doctor_id": doctor_id,
+                "imageZposition": image_zposition,
                 "center": [center_x, center_y],
                 "imageSOP_UID": image_sop_uid,
                 "filename": filename,
@@ -74,6 +79,7 @@ def cluster_nodules(nodules, distance_threshold=30):
             if not found:
                 grouped.append({
                     "imageSOP_UID": sop_uid,
+                    "imageZposition": n['imageZposition'],
                     "filename": n['filename'],
                     "centers": [n['center']],
                     "malignancies": [n['malignancy']]
@@ -89,6 +95,7 @@ def cluster_nodules(nodules, distance_threshold=30):
             )
             clusters.append({
                 "imageSOP_UID": sop_uid,
+                "imageZposition": group['imageZposition'],
                 "filename": group['filename'],
                 "center": avg_center,
                 "malignancy": avg_malignancy

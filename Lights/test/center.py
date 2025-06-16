@@ -5,9 +5,20 @@ from PIL import Image, ImageDraw
 from collections import defaultdict
 import numpy as np
 
-def draw_nodules_on_image(dicom_path, centers, output_path):
-    ds = pydicom.dcmread(dicom_path)
-    img = Image.fromarray(ds.pixel_array).convert("RGB")
+def dcm_to_pil_image(dcm_path, window_center=-600, window_width=1600):
+    dcm = pydicom.dcmread(dcm_path)
+    pixel_data = dcm.pixel_array.astype(np.float32)
+    slope = getattr(dcm, 'RescaleSlope', 1)
+    intercept = getattr(dcm, 'RescaleIntercept', 0)
+    hu = pixel_data * slope + intercept
+    window_min = window_center - window_width / 2
+    window_max = window_center + window_width / 2
+    windowed = np.clip(hu, window_min, window_max)
+    windowed = ((windowed - window_min) / (window_max - window_min) * 255).astype(np.uint8)
+    return Image.fromarray(windowed).convert("RGB")
+
+def draw_nodules_on_image(dicom_path, centers, output_path, window_center=-600, window_width=1600):
+    img = dcm_to_pil_image(dicom_path, window_center, window_width)
     draw = ImageDraw.Draw(img)
     color_map = {1: "green", 2: "yellow", 3: "orange", 4: "red", 5: "purple"}
     for center, malignancy in centers:
@@ -24,12 +35,7 @@ def draw_nodules_on_image(dicom_path, centers, output_path):
 if __name__ == "__main__":
     root_dir = r"D:\MyFile\LIDC-IDRI"
     all_null_filenames = []
-    a = 1
     for case_folder in os.listdir(root_dir):
-        # 跳过前1006个文件夹
-        if a <= 1006:
-            a += 1
-            continue
         case_path = os.path.join(root_dir, case_folder)
         if not (case_folder.startswith("LIDC-IDRI-") and os.path.isdir(case_path)):
             continue

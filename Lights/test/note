@@ -306,5 +306,34 @@ SliceThickness: ['0.90', '1.0', '1.50', '2.0', '3.0']
 
 明天得问问给的是什么样子的文件格式，是dicom的图片的还是jpg或者png这些普通格式的
 
+总样本数: 9389
+train 集: 7511 个样本
+val 集: 938 个样本
+test 集: 940 个样本
+
+100 epochs completed in 5.239 hours.
+Optimizer stripped from train3\weights\last.pt, 5.5MB
+Optimizer stripped from train3\weights\best.pt, 5.5MB
+
+Validating train3\weights\best.pt...
+Ultralytics 8.3.18 🚀 Python-3.12.8 torch-2.5.1+cu124 CUDA:0 (NVIDIA GeForce RTX 3060 Laptop GPU, 6144MiB)
+YOLO11n summary (fused): 238 layers, 2,582,347 parameters, 0 gradients
+                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100%|██████████| 118/118 [00:06<00:00, 18.89it/s]
+                   all        938       1026       0.49      0.471      0.426       0.28
+WARNING  ConfusionMatrix plot failure: No module named 'seaborn'
+WARNING  ConfusionMatrix plot failure: No module named 'seaborn'
+Speed: 0.2ms preprocess, 1.8ms inference, 0.0ms loss, 0.8ms postprocess per image
+Results saved to train3
+
+D:\Users\Lights\anaconda3\envs\PytorchLearn\python.exe D:\MyFile\qq_3045834499\yolo11-chest\42_demo\step2_start_val.py
+Ultralytics 8.3.18 🚀 Python-3.12.8 torch-2.5.1+cu124 CUDA:0 (NVIDIA GeForce RTX 3060 Laptop GPU, 6144MiB)
+YOLO11n summary (fused): 238 layers, 2,582,347 parameters, 0 gradients
+val: Scanning D:\MyFile\qq_3045834499\New\labels\val.cache... 938 images, 0 backgrounds, 0 corrupt: 100%|██████████| 938/938 [00:00<?, ?it/s]
+                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100%|██████████| 235/235 [00:08<00:00, 27.14it/s]
+                   all        938       1026       0.52      0.449      0.455      0.319
+WARNING  ConfusionMatrix plot failure: No module named 'seaborn'
+WARNING  ConfusionMatrix plot failure: No module named 'seaborn'
+Speed: 0.3ms preprocess, 3.1ms inference, 0.0ms loss, 0.6ms postprocess per image
+Results saved to runs\detect\val
 
 
