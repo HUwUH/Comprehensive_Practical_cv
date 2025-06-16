@@ -50,7 +50,7 @@ def get_dcm_numpy(path: str) -> str:
 
 if __name__ == "__main__":
     print("该文件一般不应用于被执行，除了测试使用")
-    print(get_dcm_numpy(r"..\LIDC-IDRI\LIDC-IDRI-0001\1.3.6.1.4.1.14519.5.2.1.6279.6001.298806137288633453246975630178\000000"))
+    print(get_dcm_numpy(r"E:\realtrain\LIDC-IDRI\LIDC-IDRI-0001\1.3.6.1.4.1.14519.5.2.1.6279.6001.298806137288633453246975630178\000000"))
     npy_path = "./temp/dcm_3d.npy"
     img = np.load(npy_path)
     if img.ndim == 3:
