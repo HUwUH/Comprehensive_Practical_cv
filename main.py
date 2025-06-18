@@ -24,6 +24,7 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         self.file_mode = 0  # 0:未选择, 1:文件, 2:文件夹
         self.current_dcm_index = 0
         self.dcm_files = []
+        self.dcm_positions = {}  # 存储DICOM文件的位置信息
 
         # 连接按钮信号
         self.pushButton_2.clicked.connect(self.select_folder)
@@ -76,13 +77,14 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         self.graphicsView_4.setScene(self.scene4)
 
         # 显示占位文本
-        self.ax1.text(0.5, 0.5, "视图1\n(主视图)",
+        # 目前这部分文本显示有问题
+        self.ax1.text(0.5, 0.5, "View1\n(sideView)",
                       ha='center', va='center', fontsize=20, color='gray')
-        self.ax2.text(0.5, 0.5, "视图2\n(俯视图)",
+        self.ax2.text(0.5, 0.5, "view2\n(mainview)",
                       ha='center', va='center', fontsize=20, color='gray')
-        self.ax3.text(0.5, 0.5, "视图3\n(侧视图)",
+        self.ax3.text(0.5, 0.5, "view3\n(upview)",
                       ha='center', va='center', fontsize=20, color='gray')
-        self.ax4.text(0.5, 0.5, "视图4\n(3D渲染)",
+        self.ax4.text(0.5, 0.5, "view4\n(3Dmodel)",
                       ha='center', va='center', fontsize=20, color='gray')
 
         self.canvas1.draw()
@@ -107,19 +109,67 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
             self.file_mode = 2  # 文件夹模式
 
             # 获取文件夹中的所有DICOM文件
-            self.dcm_files = [
+            all_files = [
                 os.path.join(folder, f)
                 for f in os.listdir(folder)
                 if f.lower().endswith('.dcm')
             ]
 
-            if not self.dcm_files:
+            if not all_files:
                 QMessageBox.warning(self, "无DICOM文件", "选择的文件夹中没有找到DICOM文件!")
+                return
+
+            # 读取文件位置信息并排序
+            self.dcm_positions = {}
+            self.dcm_files = []
+
+            # 创建进度对话框
+            progress = QtWidgets.QProgressDialog("加载DICOM文件...", "取消", 0, len(all_files), self)
+            progress.setWindowModality(QtCore.Qt.WindowModal)
+            progress.setWindowTitle("加载中")
+
+            for i, file_path in enumerate(all_files):
+                progress.setValue(i)
+                QtWidgets.QApplication.processEvents()
+
+                if progress.wasCanceled():
+                    break
+
+                try:
+                    # 读取DICOM文件元数据
+                    ds = pydicom.dcmread(file_path, stop_before_pixels=True)
+
+                    # 获取位置信息
+                    if hasattr(ds, 'ImagePositionPatient'):
+                        position = list(map(float, ds.ImagePositionPatient))
+                        # 使用y坐标作为排序依据
+                        y_position = position[1] if len(position) > 1 else 0.0
+                    else:
+                        y_position = 0.0
+
+                    # 存储位置信息
+                    self.dcm_positions[file_path] = y_position
+
+                except Exception as e:
+                    print(f"读取DICOM文件元数据失败: {file_path} - {str(e)}")
+
+            progress.setValue(len(all_files))
+
+            # 按y位置排序文件
+            self.dcm_files = sorted(all_files, key=lambda f: self.dcm_positions.get(f, 0.0))
+
+            if not self.dcm_files:
+                QMessageBox.warning(self, "无有效文件", "未能加载任何有效的DICOM文件!")
                 return
 
             self.current_dcm_index = 0
             self.load_and_display_dcm(self.dcm_files[self.current_dcm_index])
-            self.statusbar.showMessage(f"已加载文件夹: {folder}, 共{len(self.dcm_files)}个DICOM文件", 5000)
+
+            # 更新视图4显示位置信息
+            self.update_position_display()
+
+            self.statusbar.showMessage(f"已加载文件夹: {folder}, 共{len(self.dcm_files)}个DICOM文件 (按Y位置排序)",
+                                       5000)
 
     def select_file(self):
         """选择单个DICOM文件"""
@@ -132,7 +182,51 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
             self.dcm_files = [file]  # 为了统一处理，也放入列表
             self.current_dcm_index = 0
             self.load_and_display_dcm(file)
+
+            # 尝试读取位置信息
+            try:
+                ds = pydicom.dcmread(file, stop_before_pixels=True)
+                if hasattr(ds, 'ImagePositionPatient'):
+                    position = list(map(float, ds.ImagePositionPatient))
+                    self.dcm_positions[file] = position[1] if len(position) > 1 else 0.0
+                else:
+                    self.dcm_positions[file] = 0.0
+            except Exception:
+                self.dcm_positions[file] = 0.0
+
+            # 更新视图4显示位置信息
+            self.update_position_display()
+
             self.statusbar.showMessage(f"已加载文件: {file}", 5000)
+
+    def update_position_display(self):
+        """在视图4中显示当前DICOM文件的位置信息"""
+        if not self.dcm_files:
+            return
+
+        current_file = self.dcm_files[self.current_dcm_index]
+        y_position = self.dcm_positions.get(current_file, 0.0)
+
+        self.ax4.clear()
+        info = f"当前DICOM文件: {os.path.basename(current_file)}\n"
+        info += f"位置索引: {self.current_dcm_index + 1}/{len(self.dcm_files)}\n"
+        info += f"Y位置: {y_position:.2f}\n"
+
+        # 显示位置分布图
+        if len(self.dcm_files) > 1:
+            positions = [self.dcm_positions.get(f, 0.0) for f in self.dcm_files]
+            self.ax4.plot(positions, 'b-', label='Y位置')
+            self.ax4.plot(self.current_dcm_index, y_position, 'ro', markersize=8, label='当前')
+            self.ax4.set_xlabel('文件索引')
+            self.ax4.set_ylabel('Y位置')
+            self.ax4.set_title('DICOM文件位置分布')
+            self.ax4.legend()
+        else:
+            self.ax4.text(0.5, 0.5, info,
+                          ha='center', va='center', fontsize=12)
+            self.ax4.axis('off')
+
+        self.canvas4.draw()
 
     def load_and_display_dcm(self, file_path):
         """加载并显示DICOM文件到视图1"""
@@ -144,11 +238,11 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
             pixel_array = ds.pixel_array
 
             # 清除视图1并显示新图像
-            self.ax1.clear()
-            self.ax1.imshow(pixel_array, cmap='gray')
-            self.ax1.set_title(f"DICOM图像: {os.path.basename(file_path)}")
-            self.ax1.axis('off')
-            self.canvas1.draw()
+            self.ax3.clear()
+            self.ax3.imshow(pixel_array, cmap='gray')
+            self.ax3.set_title(f"DICOM图像: {os.path.basename(file_path)}")
+            self.ax3.axis('off')
+            self.canvas3.draw()
 
             # 在状态栏显示DICOM信息
             info = f"图像尺寸: {pixel_array.shape} | 患者: {ds.get('PatientName', '未知')}"

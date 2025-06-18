@@ -53,6 +53,7 @@ if __name__ == "__main__":
     print(get_dcm_numpy(r"E:\realtrain\LIDC-IDRI\LIDC-IDRI-0001\1.3.6.1.4.1.14519.5.2.1.6279.6001.298806137288633453246975630178\000000"))
     npy_path = "./temp/dcm_3d.npy"
     img = np.load(npy_path)
+    print(img.shape)
     if img.ndim == 3:
         num_slices = img.shape[0]
         print(f"3D Image loaded: {num_slices} slices")
