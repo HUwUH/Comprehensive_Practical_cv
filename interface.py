@@ -3,12 +3,14 @@ import os
 import numpy as np
 import pydicom
 from matplotlib import pyplot as plt
+from typing import Tuple,List
 
 
-def get_dcm_numpy(path: str) -> str:
+def get_dcm_numpy(path: str) -> Tuple[str,List[dict]]:
     """
     输入文件路径或文件夹路径，返回 numpy 数组保存路径。
     如果是文件夹，会按 z 坐标排序并堆叠为 3D 数组。
+    此外，返回一个list，保存全部层的{"z":z,"PixelSpaceYX":ds.PixelSpacing}。如果是单层，则没有z属性。
     """
     if not os.path.exists(path):
         return "path not exists"
@@ -32,15 +34,16 @@ def get_dcm_numpy(path: str) -> str:
             save_path = os.path.join("./temp", "dcm_3d.npy")
             np.save(save_path, img_stack)
 
-            return save_path
+            return save_path,[info[1] for info in imgs_with_info]
 
         elif os.path.isfile(path):
             ds = pydicom.dcmread(path)
             img = ds.pixel_array
+            spacing = ds.PixelSpacing
             os.makedirs("./temp", exist_ok=True)
             save_path = os.path.join("./temp", "dcm_2d.npy")
             np.save(save_path, img)
-            return save_path
+            return save_path,[{"PixelSpaceYX":spacing}]
 
         else:
             return "invalid path"
