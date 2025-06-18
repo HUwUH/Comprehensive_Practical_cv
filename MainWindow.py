@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1920, 1080)
+        MainWindow.resize(1928, 1097)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
@@ -71,7 +71,7 @@ class Ui_MainWindow(object):
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1920, 22))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1928, 22))
         self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
 
@@ -84,7 +84,7 @@ class Ui_MainWindow(object):
         self.label.setText(_translate("MainWindow", "TextLabel"))
         self.pushButton_2.setText(_translate("MainWindow", "选择文件夹"))
         self.pushButton_3.setText(_translate("MainWindow", "选择文件"))
-        self.pushButton.setText(_translate("MainWindow", "发送地址"))
+        self.pushButton.setText(_translate("MainWindow", "生成numpy"))
         self.pushButton_4.setText(_translate("MainWindow", "打开numpy文件"))
         self.pushButton_5.setText(_translate("MainWindow", "预测"))
         self.pushButton_6.setText(_translate("MainWindow", "准确度分析"))

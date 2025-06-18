@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1920</width>
-    <height>1080</height>
+    <width>1928</width>
+    <height>1097</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -74,7 +74,7 @@
       <item>
        <widget class="QPushButton" name="pushButton">
         <property name="text">
-         <string>发送地址</string>
+         <string>生成numpy</string>
         </property>
        </widget>
       </item>
@@ -116,7 +116,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1920</width>
+     <width>1928</width>
      <height>22</height>
     </rect>
    </property>

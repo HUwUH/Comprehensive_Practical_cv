@@ -10,8 +10,35 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from skimage import measure
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QFileDialog, QMessageBox, QProgressDialog
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QProgressDialog, QDialog, QVBoxLayout, QHBoxLayout, QPushButton
 from MainWindow import Ui_MainWindow  # 替换为你的UI文件名
+
+
+class ZoomDialog(QDialog):
+    """自定义放大对话框，用于显示放大的图像"""
+
+    def __init__(self, title, fig, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(f"放大视图: {title}")
+        self.setMinimumSize(800, 600)
+
+        # 创建主布局
+        main_layout = QVBoxLayout()
+
+        # 创建图形画布
+        self.canvas = FigureCanvas(fig)
+        main_layout.addWidget(self.canvas)
+
+        # 创建关闭按钮
+        btn_layout = QHBoxLayout()
+        btn_close = QPushButton("关闭")
+        btn_close.clicked.connect(self.close)
+        btn_layout.addStretch()
+        btn_layout.addWidget(btn_close)
+        btn_layout.addStretch()
+
+        main_layout.addLayout(btn_layout)
+        self.setLayout(main_layout)
 
 
 class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -31,6 +58,14 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         self.dcm_positions = {}  # 存储DICOM文件的位置信息
         self.three_d_model = None  # 存储3D模型数据
 
+        # 存储每个视图的图形对象
+        self.view_figures = {
+            'view1': None,
+            'view2': None,
+            'view3': None,
+            'view4': None
+        }
+
         # 连接按钮信号
         self.pushButton_2.clicked.connect(self.select_folder)
         self.pushButton_3.clicked.connect(self.select_file)
@@ -49,6 +84,12 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         self.graphicsView_3.wheelEvent = self.view3_wheel_event
         self.graphicsView_4.wheelEvent = self.view4_wheel_event
 
+        # 设置鼠标双击事件
+        self.graphicsView.mouseDoubleClickEvent = lambda event: self.handle_double_click(event, 'view1')
+        self.graphicsView_2.mouseDoubleClickEvent = lambda event: self.handle_double_click(event, 'view2')
+        self.graphicsView_3.mouseDoubleClickEvent = lambda event: self.handle_double_click(event, 'view3')
+        self.graphicsView_4.mouseDoubleClickEvent = lambda event: self.handle_double_click(event, 'view4')
+
         # 设置当前激活的视图
         self.active_view = 1
 
@@ -63,6 +104,7 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         self.scene1 = QtWidgets.QGraphicsScene()
         self.scene1.addWidget(self.canvas1)
         self.graphicsView.setScene(self.scene1)
+        self.view_figures['view1'] = self.fig1
 
         self.fig2 = Figure()
         self.ax2 = self.fig2.add_subplot(111)
@@ -70,6 +112,7 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         self.scene2 = QtWidgets.QGraphicsScene()
         self.scene2.addWidget(self.canvas2)
         self.graphicsView_2.setScene(self.scene2)
+        self.view_figures['view2'] = self.fig2
 
         self.fig3 = Figure()
         self.ax3 = self.fig3.add_subplot(111)
@@ -77,6 +120,7 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         self.scene3 = QtWidgets.QGraphicsScene()
         self.scene3.addWidget(self.canvas3)
         self.graphicsView_3.setScene(self.scene3)
+        self.view_figures['view3'] = self.fig3
 
         # 视图4使用3D轴
         self.fig4 = Figure()
@@ -85,6 +129,7 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         self.scene4 = QtWidgets.QGraphicsScene()
         self.scene4.addWidget(self.canvas4)
         self.graphicsView_4.setScene(self.scene4)
+        self.view_figures['view4'] = self.fig4
 
         # 显示占位文本
         self.ax1.text(0.5, 0.5, "视图1\n(主视图)",
@@ -110,6 +155,84 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         self.graphicsView_2.setScene(QtWidgets.QGraphicsScene())
         self.graphicsView_3.setScene(QtWidgets.QGraphicsScene())
         self.graphicsView_4.setScene(QtWidgets.QGraphicsScene())
+
+    def handle_double_click(self, event, view_name):
+        """处理鼠标双击事件 - 在新窗口中显示放大视图"""
+        if event.button() != QtCore.Qt.LeftButton:
+            return
+
+        # 获取当前视图的图形对象
+        fig = self.view_figures[view_name]
+
+        # 创建新的图形对象用于放大视图
+        zoom_fig = Figure(figsize=(10, 8))
+        zoom_ax = zoom_fig.add_subplot(111)
+
+        # 复制原始图形的内容
+        if view_name == 'view1':
+            for line in self.ax1.get_lines():
+                zoom_ax.add_line(line)
+            if self.ax1.images:
+                img = self.ax1.images[0]
+                zoom_ax.imshow(img.get_array(), cmap=img.get_cmap(),
+                               vmin=img.get_clim()[0], vmax=img.get_clim()[1])
+            zoom_ax.set_title(self.ax1.get_title())
+            zoom_ax.axis('off')
+        elif view_name == 'view2':
+            for line in self.ax2.get_lines():
+                zoom_ax.add_line(line)
+            if self.ax2.images:
+                img = self.ax2.images[0]
+                zoom_ax.imshow(img.get_array(), cmap=img.get_cmap(),
+                               vmin=img.get_clim()[0], vmax=img.get_clim()[1])
+            zoom_ax.set_title(self.ax2.get_title())
+            zoom_ax.axis('off')
+        elif view_name == 'view3':
+            for line in self.ax3.get_lines():
+                zoom_ax.add_line(line)
+            if self.ax3.images:
+                img = self.ax3.images[0]
+                zoom_ax.imshow(img.get_array(), cmap=img.get_cmap(),
+                               vmin=img.get_clim()[0], vmax=img.get_clim()[1])
+            zoom_ax.set_title(self.ax3.get_title())
+            zoom_ax.axis('off')
+        elif view_name == 'view4':
+            # 对于视图4，特殊处理（可能是3D图）
+            if hasattr(self.ax4, 'name') and self.ax4.name == '3d':
+                # 3D视图 - 创建新的3D视图
+                zoom_fig.clf()
+                zoom_ax = zoom_fig.add_subplot(111, projection='3d')
+
+                # 复制3D内容
+                for collection in self.ax4.collections:
+                    zoom_ax.add_collection3d(collection)
+
+                # 复制轴设置
+                zoom_ax.set_xlim(self.ax4.get_xlim())
+                zoom_ax.set_ylim(self.ax4.get_ylim())
+                zoom_ax.set_zlim(self.ax4.get_zlim())
+                zoom_ax.set_xlabel(self.ax4.get_xlabel())
+                zoom_ax.set_ylabel(self.ax4.get_ylabel())
+                zoom_ax.set_zlabel(self.ax4.get_zlabel())
+                zoom_ax.set_title(self.ax4.get_title())
+
+                # 复制视角
+                zoom_ax.view_init(elev=self.ax4.elev, azim=self.ax4.azim)
+            else:
+                # 2D视图
+                for line in self.ax4.get_lines():
+                    zoom_ax.add_line(line)
+                if self.ax4.images:
+                    img = self.ax4.images[0]
+                    zoom_ax.imshow(img.get_array(), cmap=img.get_cmap(),
+                                   vmin=img.get_clim()[0], vmax=img.get_clim()[1])
+                zoom_ax.set_title(self.ax4.get_title())
+                if self.ax4.axis() != 'off':
+                    zoom_ax.axis('on')
+
+        # 创建并显示放大对话框
+        dialog = ZoomDialog(view_name, zoom_fig, self)
+        dialog.exec_()
 
     # ===================== 按钮功能实现 =====================
 
@@ -339,7 +462,7 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         try:
             # 使用Marching Cubes算法提取等值面
             # 为了性能，我们可以对数据进行降采样
-            downsampling_factor = 10 if max(self.current_numpy_data.shape) > 256 else 1
+            downsampling_factor = 2 if max(self.current_numpy_data.shape) > 256 else 1
 
             # 准备降采样后的数据
             data = self.current_numpy_data[::downsampling_factor,
