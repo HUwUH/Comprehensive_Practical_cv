@@ -1,0 +1,339 @@
+可以看见，文件名字和InstanceNumber并不是一一对应的。
+甚至连顺序关系也没有
+以下是0001的内容
+```
+InstanceNumber: 80
+ImagePositionPatient: [-166.000000, -171.699997, -207.500000]
+InstanceNumber: 52
+ImagePositionPatient: [-166.000000, -171.699997, -137.500000]
+InstanceNumber: 42
+ImagePositionPatient: [-166.000000, -171.699997, -112.500000]
+InstanceNumber: 59
+ImagePositionPatient: [-166.000000, -171.699997, -155.000000]
+InstanceNumber: 28
+ImagePositionPatient: [-166.000000, -171.699997, -77.500000]
+InstanceNumber: 8
+ImagePositionPatient: [-166.000000, -171.699997, -27.500000]
+InstanceNumber: 86
+ImagePositionPatient: [-166.000000, -171.699997, -222.500000]
+InstanceNumber: 111
+ImagePositionPatient: [-166.000000, -171.699997, -285.000000]
+InstanceNumber: 88
+ImagePositionPatient: [-166.000000, -171.699997, -227.500000]
+InstanceNumber: 116
+ImagePositionPatient: [-166.000000, -171.699997, -297.500000]
+InstanceNumber: 17
+ImagePositionPatient: [-166.000000, -171.699997, -50.000000]
+InstanceNumber: 131
+ImagePositionPatient: [-166.000000, -171.699997, -335.000000]
+InstanceNumber: 93
+ImagePositionPatient: [-166.000000, -171.699997, -240.000000]
+InstanceNumber: 106
+ImagePositionPatient: [-166.000000, -171.699997, -272.500000]
+InstanceNumber: 79
+ImagePositionPatient: [-166.000000, -171.699997, -205.000000]
+InstanceNumber: 1
+ImagePositionPatient: [-166.000000, -171.699997, -10.000000]
+InstanceNumber: 81
+ImagePositionPatient: [-166.000000, -171.699997, -210.000000]
+InstanceNumber: 22
+ImagePositionPatient: [-166.000000, -171.699997, -62.500000]
+InstanceNumber: 76
+ImagePositionPatient: [-166.000000, -171.699997, -197.500000]
+InstanceNumber: 66
+ImagePositionPatient: [-166.000000, -171.699997, -172.500000]
+InstanceNumber: 133
+ImagePositionPatient: [-166.000000, -171.699997, -340.000000]
+InstanceNumber: 114
+ImagePositionPatient: [-166.000000, -171.699997, -292.500000]
+InstanceNumber: 112
+ImagePositionPatient: [-166.000000, -171.699997, -287.500000]
+InstanceNumber: 94
+ImagePositionPatient: [-166.000000, -171.699997, -242.500000]
+InstanceNumber: 39
+ImagePositionPatient: [-166.000000, -171.699997, -105.000000]
+InstanceNumber: 85
+ImagePositionPatient: [-166.000000, -171.699997, -220.000000]
+InstanceNumber: 4
+ImagePositionPatient: [-166.000000, -171.699997, -17.500000]
+InstanceNumber: 6
+ImagePositionPatient: [-166.000000, -171.699997, -22.500000]
+InstanceNumber: 73
+ImagePositionPatient: [-166.000000, -171.699997, -190.000000]
+InstanceNumber: 40
+ImagePositionPatient: [-166.000000, -171.699997, -107.500000]
+InstanceNumber: 16
+ImagePositionPatient: [-166.000000, -171.699997, -47.500000]
+InstanceNumber: 108
+ImagePositionPatient: [-166.000000, -171.699997, -277.500000]
+InstanceNumber: 55
+ImagePositionPatient: [-166.000000, -171.699997, -145.000000]
+InstanceNumber: 104
+ImagePositionPatient: [-166.000000, -171.699997, -267.500000]
+InstanceNumber: 18
+ImagePositionPatient: [-166.000000, -171.699997, -52.500000]
+InstanceNumber: 113
+ImagePositionPatient: [-166.000000, -171.699997, -290.000000]
+InstanceNumber: 70
+ImagePositionPatient: [-166.000000, -171.699997, -182.500000]
+InstanceNumber: 67
+ImagePositionPatient: [-166.000000, -171.699997, -175.000000]
+InstanceNumber: 5
+ImagePositionPatient: [-166.000000, -171.699997, -20.000000]
+InstanceNumber: 69
+ImagePositionPatient: [-166.000000, -171.699997, -180.000000]
+InstanceNumber: 43
+ImagePositionPatient: [-166.000000, -171.699997, -115.000000]
+InstanceNumber: 62
+ImagePositionPatient: [-166.000000, -171.699997, -162.500000]
+InstanceNumber: 92
+ImagePositionPatient: [-166.000000, -171.699997, -237.500000]
+InstanceNumber: 125
+ImagePositionPatient: [-166.000000, -171.699997, -320.000000]
+InstanceNumber: 24
+ImagePositionPatient: [-166.000000, -171.699997, -67.500000]
+InstanceNumber: 35
+ImagePositionPatient: [-166.000000, -171.699997, -95.000000]
+InstanceNumber: 71
+ImagePositionPatient: [-166.000000, -171.699997, -185.000000]
+InstanceNumber: 110
+ImagePositionPatient: [-166.000000, -171.699997, -282.500000]
+InstanceNumber: 58
+ImagePositionPatient: [-166.000000, -171.699997, -152.500000]
+InstanceNumber: 100
+ImagePositionPatient: [-166.000000, -171.699997, -257.500000]
+InstanceNumber: 97
+ImagePositionPatient: [-166.000000, -171.699997, -250.000000]
+InstanceNumber: 15
+ImagePositionPatient: [-166.000000, -171.699997, -45.000000]
+InstanceNumber: 50
+ImagePositionPatient: [-166.000000, -171.699997, -132.500000]
+InstanceNumber: 102
+ImagePositionPatient: [-166.000000, -171.699997, -262.500000]
+InstanceNumber: 89
+ImagePositionPatient: [-166.000000, -171.699997, -230.000000]
+InstanceNumber: 123
+ImagePositionPatient: [-166.000000, -171.699997, -315.000000]
+InstanceNumber: 75
+ImagePositionPatient: [-166.000000, -171.699997, -195.000000]
+InstanceNumber: 49
+ImagePositionPatient: [-166.000000, -171.699997, -130.000000]
+InstanceNumber: 118
+ImagePositionPatient: [-166.000000, -171.699997, -302.500000]
+InstanceNumber: 95
+ImagePositionPatient: [-166.000000, -171.699997, -245.000000]
+InstanceNumber: 44
+ImagePositionPatient: [-166.000000, -171.699997, -117.500000]
+InstanceNumber: 20
+ImagePositionPatient: [-166.000000, -171.699997, -57.500000]
+InstanceNumber: 83
+ImagePositionPatient: [-166.000000, -171.699997, -215.000000]
+InstanceNumber: 30
+ImagePositionPatient: [-166.000000, -171.699997, -82.500000]
+InstanceNumber: 33
+ImagePositionPatient: [-166.000000, -171.699997, -90.000000]
+InstanceNumber: 109
+ImagePositionPatient: [-166.000000, -171.699997, -280.000000]
+InstanceNumber: 60
+ImagePositionPatient: [-166.000000, -171.699997, -157.500000]
+InstanceNumber: 10
+ImagePositionPatient: [-166.000000, -171.699997, -32.500000]
+InstanceNumber: 63
+ImagePositionPatient: [-166.000000, -171.699997, -165.000000]
+InstanceNumber: 119
+ImagePositionPatient: [-166.000000, -171.699997, -305.000000]
+InstanceNumber: 47
+ImagePositionPatient: [-166.000000, -171.699997, -125.000000]
+InstanceNumber: 72
+ImagePositionPatient: [-166.000000, -171.699997, -187.500000]
+InstanceNumber: 64
+ImagePositionPatient: [-166.000000, -171.699997, -167.500000]
+InstanceNumber: 31
+ImagePositionPatient: [-166.000000, -171.699997, -85.000000]
+InstanceNumber: 53
+ImagePositionPatient: [-166.000000, -171.699997, -140.000000]
+InstanceNumber: 68
+ImagePositionPatient: [-166.000000, -171.699997, -177.500000]
+InstanceNumber: 38
+ImagePositionPatient: [-166.000000, -171.699997, -102.500000]
+InstanceNumber: 82
+ImagePositionPatient: [-166.000000, -171.699997, -212.500000]
+InstanceNumber: 84
+ImagePositionPatient: [-166.000000, -171.699997, -217.500000]
+InstanceNumber: 45
+ImagePositionPatient: [-166.000000, -171.699997, -120.000000]
+InstanceNumber: 120
+ImagePositionPatient: [-166.000000, -171.699997, -307.500000]
+InstanceNumber: 48
+ImagePositionPatient: [-166.000000, -171.699997, -127.500000]
+InstanceNumber: 56
+ImagePositionPatient: [-166.000000, -171.699997, -147.500000]
+InstanceNumber: 25
+ImagePositionPatient: [-166.000000, -171.699997, -70.000000]
+InstanceNumber: 19
+ImagePositionPatient: [-166.000000, -171.699997, -55.000000]
+InstanceNumber: 77
+ImagePositionPatient: [-166.000000, -171.699997, -200.000000]
+InstanceNumber: 12
+ImagePositionPatient: [-166.000000, -171.699997, -37.500000]
+InstanceNumber: 127
+ImagePositionPatient: [-166.000000, -171.699997, -325.000000]
+InstanceNumber: 91
+ImagePositionPatient: [-166.000000, -171.699997, -235.000000]
+InstanceNumber: 3
+ImagePositionPatient: [-166.000000, -171.699997, -15.000000]
+InstanceNumber: 124
+ImagePositionPatient: [-166.000000, -171.699997, -317.500000]
+InstanceNumber: 99
+ImagePositionPatient: [-166.000000, -171.699997, -255.000000]
+InstanceNumber: 32
+ImagePositionPatient: [-166.000000, -171.699997, -87.500000]
+InstanceNumber: 96
+ImagePositionPatient: [-166.000000, -171.699997, -247.500000]
+InstanceNumber: 54
+ImagePositionPatient: [-166.000000, -171.699997, -142.500000]
+InstanceNumber: 37
+ImagePositionPatient: [-166.000000, -171.699997, -100.000000]
+InstanceNumber: 103
+ImagePositionPatient: [-166.000000, -171.699997, -265.000000]
+InstanceNumber: 98
+ImagePositionPatient: [-166.000000, -171.699997, -252.500000]
+InstanceNumber: 34
+ImagePositionPatient: [-166.000000, -171.699997, -92.500000]
+InstanceNumber: 128
+ImagePositionPatient: [-166.000000, -171.699997, -327.500000]
+InstanceNumber: 11
+ImagePositionPatient: [-166.000000, -171.699997, -35.000000]
+InstanceNumber: 29
+ImagePositionPatient: [-166.000000, -171.699997, -80.000000]
+InstanceNumber: 61
+ImagePositionPatient: [-166.000000, -171.699997, -160.000000]
+InstanceNumber: 41
+ImagePositionPatient: [-166.000000, -171.699997, -110.000000]
+InstanceNumber: 132
+ImagePositionPatient: [-166.000000, -171.699997, -337.500000]
+InstanceNumber: 21
+ImagePositionPatient: [-166.000000, -171.699997, -60.000000]
+InstanceNumber: 129
+ImagePositionPatient: [-166.000000, -171.699997, -330.000000]
+InstanceNumber: 65
+ImagePositionPatient: [-166.000000, -171.699997, -170.000000]
+InstanceNumber: 78
+ImagePositionPatient: [-166.000000, -171.699997, -202.500000]
+InstanceNumber: 74
+ImagePositionPatient: [-166.000000, -171.699997, -192.500000]
+InstanceNumber: 36
+ImagePositionPatient: [-166.000000, -171.699997, -97.500000]
+InstanceNumber: 26
+ImagePositionPatient: [-166.000000, -171.699997, -72.500000]
+InstanceNumber: 14
+ImagePositionPatient: [-166.000000, -171.699997, -42.500000]
+InstanceNumber: 107
+ImagePositionPatient: [-166.000000, -171.699997, -275.000000]
+InstanceNumber: 117
+ImagePositionPatient: [-166.000000, -171.699997, -300.000000]
+InstanceNumber: 105
+ImagePositionPatient: [-166.000000, -171.699997, -270.000000]
+InstanceNumber: 121
+ImagePositionPatient: [-166.000000, -171.699997, -310.000000]
+InstanceNumber: 7
+ImagePositionPatient: [-166.000000, -171.699997, -25.000000]
+InstanceNumber: 23
+ImagePositionPatient: [-166.000000, -171.699997, -65.000000]
+InstanceNumber: 126
+ImagePositionPatient: [-166.000000, -171.699997, -322.500000]
+InstanceNumber: 27
+ImagePositionPatient: [-166.000000, -171.699997, -75.000000]
+InstanceNumber: 51
+ImagePositionPatient: [-166.000000, -171.699997, -135.000000]
+InstanceNumber: 46
+ImagePositionPatient: [-166.000000, -171.699997, -122.500000]
+InstanceNumber: 13
+ImagePositionPatient: [-166.000000, -171.699997, -40.000000]
+InstanceNumber: 115
+ImagePositionPatient: [-166.000000, -171.699997, -295.000000]
+InstanceNumber: 122
+ImagePositionPatient: [-166.000000, -171.699997, -312.500000]
+InstanceNumber: 130
+ImagePositionPatient: [-166.000000, -171.699997, -332.500000]
+InstanceNumber: 57
+ImagePositionPatient: [-166.000000, -171.699997, -150.000000]
+InstanceNumber: 87
+ImagePositionPatient: [-166.000000, -171.699997, -225.000000]
+InstanceNumber: 9
+ImagePositionPatient: [-166.000000, -171.699997, -30.000000]
+InstanceNumber: 101
+ImagePositionPatient: [-166.000000, -171.699997, -260.000000]
+InstanceNumber: 2
+ImagePositionPatient: [-166.000000, -171.699997, -12.500000]
+InstanceNumber: 90
+ImagePositionPatient: [-166.000000, -171.699997, -232.500000]
+```
+这些CT数据使用不同的机器：
+Manufacturer: GE MEDICAL SYSTEMS
+SliceThickness: ['1.250000', '2.500000']
+Manufacturer: SIEMENS
+SliceThickness: ['0.6', '0.75', '1', '1.25', '2', '3', '4', '5']
+Manufacturer: TOSHIBA
+SliceThickness: ['2.0', '3.0']
+Manufacturer: Philips
+SliceThickness: ['0.90', '1.0', '1.50', '2.0', '3.0']
+可以看见，一共有4个不同的机器，通用，西门子，东芝和飞利浦。
+
+
+
+<readingSession>就是一个医生的诊断结果，
+其中<unblindedReadNodule>就是医生诊断的结节，
+再其中<characteristics>是结节的特征，
+里面的<malignancy>就是医生诊断的恶性程度，有1到5的等级，
+<roi>就是感兴趣区域，也就是结节的区域，
+里面的<imageSOP_UID>就是图像的SOP实例UID，<imageZposition>就是图像的Z轴位置，都可以用来关联图像和结节。
+<edgeMap>表示一个边缘点，一个就是小结节，很多个就是大结节的边缘点，
+
+
+明天想个办法表示一下中心的点
+
+
+处理: LIDC-IDRI-1009
+跳过: LIDC-IDRI-1009（缺少DICOM或XML）
+处理: LIDC-IDRI-1010
+跳过: LIDC-IDRI-1010（缺少DICOM或XML）
+处理: LIDC-IDRI-1011
+跳过: LIDC-IDRI-1011（缺少DICOM或XML）
+处理: LIDC-IDRI-1012
+跳过: LIDC-IDRI-1012（缺少DICOM或XML）
+
+
+明天得问问给的是什么样子的文件格式，是dicom的图片的还是jpg或者png这些普通格式的
+
+总样本数: 9389
+train 集: 7511 个样本
+val 集: 938 个样本
+test 集: 940 个样本
+
+100 epochs completed in 5.239 hours.
+Optimizer stripped from train3\weights\last.pt, 5.5MB
+Optimizer stripped from train3\weights\best.pt, 5.5MB
+
+Validating train3\weights\best.pt...
+Ultralytics 8.3.18 🚀 Python-3.12.8 torch-2.5.1+cu124 CUDA:0 (NVIDIA GeForce RTX 3060 Laptop GPU, 6144MiB)
+YOLO11n summary (fused): 238 layers, 2,582,347 parameters, 0 gradients
+                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100%|██████████| 118/118 [00:06<00:00, 18.89it/s]
+                   all        938       1026       0.49      0.471      0.426       0.28
+WARNING  ConfusionMatrix plot failure: No module named 'seaborn'
+WARNING  ConfusionMatrix plot failure: No module named 'seaborn'
+Speed: 0.2ms preprocess, 1.8ms inference, 0.0ms loss, 0.8ms postprocess per image
+Results saved to train3
+
+D:\Users\Lights\anaconda3\envs\PytorchLearn\python.exe D:\MyFile\qq_3045834499\yolo11-chest\42_demo\step2_start_val.py
+Ultralytics 8.3.18 🚀 Python-3.12.8 torch-2.5.1+cu124 CUDA:0 (NVIDIA GeForce RTX 3060 Laptop GPU, 6144MiB)
+YOLO11n summary (fused): 238 layers, 2,582,347 parameters, 0 gradients
+val: Scanning D:\MyFile\qq_3045834499\New\labels\val.cache... 938 images, 0 backgrounds, 0 corrupt: 100%|██████████| 938/938 [00:00<?, ?it/s]
+                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100%|██████████| 235/235 [00:08<00:00, 27.14it/s]
+                   all        938       1026       0.52      0.449      0.455      0.319
+WARNING  ConfusionMatrix plot failure: No module named 'seaborn'
+WARNING  ConfusionMatrix plot failure: No module named 'seaborn'
+Speed: 0.3ms preprocess, 3.1ms inference, 0.0ms loss, 0.6ms postprocess per image
+Results saved to runs\detect\val
+
+
