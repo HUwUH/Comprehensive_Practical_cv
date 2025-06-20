@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
+
+import cv2
 import numpy as np
 import pydicom
 import matplotlib.pyplot as plt
@@ -12,7 +14,7 @@ from skimage import measure
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QProgressDialog, QDialog, QVBoxLayout, QHBoxLayout, QPushButton
 from MainWindow import Ui_MainWindow  # 替换为你的UI文件名
-
+from ultralytics import YOLO
 
 class ZoomDialog(QDialog):
     """自定义放大对话框，用于显示放大的图像"""
@@ -71,7 +73,7 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         self.pushButton_3.clicked.connect(self.select_file)
         self.pushButton.clicked.connect(self.send_address)
         self.pushButton_4.clicked.connect(self.open_numpy_file)
-        self.pushButton_5.clicked.connect(self.predict)
+        self.pushButton_5.clicked.connect(self.predict1)
         self.pushButton_6.clicked.connect(self.accuracy_analysis)
         self.pushButton_7.clicked.connect(self.exit_app)
 
@@ -377,8 +379,8 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
             pixel_array = ds.pixel_array
 
             # 清除视图1并显示新图像
-            self.ax1.clear()
-            self.ax1.imshow(pixel_array, cmap='gray')
+            self.ax3.clear()
+            self.ax3.imshow(pixel_array, cmap='gray')
 
             # 显示文件名和位置信息
             y_position = self.dcm_positions.get(file_path, 0.0)
@@ -386,9 +388,9 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
             if len(self.dcm_files) > 1:
                 title += f"\n位置: {self.current_dcm_index + 1}/{len(self.dcm_files)} (Y={y_position:.2f})"
 
-            self.ax1.set_title(title)
-            self.ax1.axis('off')
-            self.canvas1.draw()
+            self.ax3.set_title(title)
+            self.ax3.axis('off')
+            self.canvas3.draw()
 
             # 在状态栏显示DICOM信息
             info = f"图像尺寸: {pixel_array.shape} | 患者: {ds.get('PatientName', '未知')}"
@@ -401,6 +403,8 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         """发送当前选择的文件或文件夹地址"""
         if self.file_mode == 1 and self.current_file:
             # 文件模式
+
+            #self.load_and_display_dcm(results[0])
             QMessageBox.information(self, "发送地址", f"已发送文件地址到后端:\n{self.current_file}")
             # 这里可以添加实际的后端通信代码
             print(f"发送文件地址: {self.current_file}")
@@ -554,7 +558,7 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ax3.axis('off')
         self.canvas3.draw()
 
-    def predict(self):
+    def predict1(self):
         """根据当前模式进行预测"""
         if self.file_mode == 0:
             QMessageBox.warning(self, "未选择", "请先选择文件或文件夹!")
@@ -573,13 +577,21 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         if not self.current_file:
             QMessageBox.warning(self, "无文件", "未选择文件!")
             return
+        model = YOLO(r'D:\PycharmProjects\Comprehensive_Practical_cv\model\best.pt')
+        img_path = r"D:\PycharmProjects\Comprehensive_Practical_cv\jpgfile\temp.jpg"
+        self.dcm_to_jpg(self.current_file, img_path)
+        results = model.predict(source=img_path)
+        result = results[0]
 
+        #self.ax1.clear()
+        #self.ax1.imshow(results[0], cmap='viridis')
         # 这里添加实际的预测逻辑
         # 示例: 显示预测结果
-        self.ax1.clear()
-        self.ax1.text(0.5, 0.5, "预测结果", ha='center', va='center', fontsize=20)
-        self.ax1.axis('off')
-        self.canvas1.draw()
+        self.ax2.clear()
+        #self.ax1.text(0.5, 0.5, "预测结果", ha='center', va='center', fontsize=20)
+        self.ax2.imshow(result.plot(), cmap='viridis')
+        self.ax2.axis('off')
+        self.canvas2.draw()
 
         self.statusbar.showMessage(f"已完成对 {os.path.basename(self.current_file)} 的预测", 5000)
 
@@ -787,6 +799,30 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
             # 重新绘制视图
             self.ax4.set_box_aspect([1, 1, 1])
             self.canvas4.draw()
+
+    def dcm_to_jpg(self, dcm_path, jpg_path, window_center=-600, window_width=1600):
+        # 读取 DICOM 文件
+        dcm = pydicom.dcmread(dcm_path)
+        # 获取像素数据
+        pixel_data = dcm.pixel_array.astype(np.float32)
+        # 获取 DICOM 文件中的斜率和截距
+        slope = dcm.RescaleSlope
+        intercept = dcm.RescaleIntercept
+        # 应用斜率和截距进行线性变换
+        hu = pixel_data * slope + intercept
+
+        # 计算窗位和窗宽的上下限
+        window_min = window_center - window_width / 2
+        window_max = window_center + window_width / 2
+
+        # 进行窗宽窗位的调整
+        windowed = np.clip(hu, window_min, window_max)
+        # 归一化到 0-255 范围
+        windowed = ((windowed - window_min) / (window_max - window_min) * 255).astype(np.uint8)
+
+        # 保存为 JPEG 图片
+        cv2.imwrite(jpg_path, windowed)
+
 
 
 # ===================== 主函数 =====================
