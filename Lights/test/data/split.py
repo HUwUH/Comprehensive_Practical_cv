@@ -5,7 +5,7 @@ import shutil
 def split_dataset(base_dir, seed=42):
     images_dir = os.path.join(base_dir, "images")
     labels_dir = os.path.join(base_dir, "labels")
-    img_files = sorted([f for f in os.listdir(images_dir) if f.endswith(".png")])
+    img_files = sorted([f for f in os.listdir(images_dir) if f.endswith(".jpg")])
     total = len(img_files)
     print(f"总样本数: {total}")
 
@@ -27,11 +27,11 @@ def split_dataset(base_dir, seed=42):
         os.makedirs(os.path.join(images_dir, split), exist_ok=True)
         os.makedirs(os.path.join(labels_dir, split), exist_ok=True)
         for img_name in splits[split]:
-            label_name = img_name.replace(".png", ".txt")
+            label_name = img_name.replace(".jpg", ".txt")
             shutil.move(os.path.join(images_dir, img_name), os.path.join(images_dir, split, img_name))
             shutil.move(os.path.join(labels_dir, label_name), os.path.join(labels_dir, split, label_name))
         print(f"{split} 集: {len(splits[split])} 个样本")
 
 if __name__ == "__main__":
-    base_dir = r"D:\MyFile\qq_3045834499\NewPNG"
+    base_dir = r"D:\MyFile\qq_3045834499\NewMoreJPG"
     split_dataset(base_dir)

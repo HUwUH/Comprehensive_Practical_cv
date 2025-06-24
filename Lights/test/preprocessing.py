@@ -24,40 +24,41 @@ def parse_nodules(xml_file, sopuid_to_filename):
     nodules = []
     for doctor_id, reading_session in enumerate(root.findall('ns:readingSession', namespace)):
         for nodule in reading_session.findall('ns:unblindedReadNodule', namespace):
-            roi = nodule.find('ns:roi', namespace)
-            if roi is None:
-                continue
-            image_zposition = roi.find('ns:imageZposition', namespace)
-            if image_zposition is None:
-                continue
-            image_zposition = image_zposition.text
-            edge_maps = roi.findall('ns:edgeMap', namespace)
-            if not edge_maps:
-                continue
-            xs, ys = [], []
-            for edge in edge_maps:
-                x = float(edge.find('ns:xCoord', namespace).text)
-                y = float(edge.find('ns:yCoord', namespace).text)
-                xs.append(x)
-                ys.append(y)
-            center_x = sum(xs) / len(xs)
-            center_y = sum(ys) / len(ys)
-            image_sop_uid = roi.find('ns:imageSOP_UID', namespace).text
-            filename = sopuid_to_filename.get(image_sop_uid)
-            malignancy = None
-            characteristics = nodule.find('ns:characteristics', namespace)
-            if characteristics is not None:
-                malignancy_elem = characteristics.find('ns:malignancy', namespace)
-                if malignancy_elem is not None:
-                    malignancy = int(malignancy_elem.text)
-            nodules.append({
-                "doctor_id": doctor_id,
-                "imageZposition": image_zposition,
-                "center": [center_x, center_y],
-                "imageSOP_UID": image_sop_uid,
-                "filename": filename,
-                "malignancy": malignancy
-            })
+            for roi in nodule.findall('ns:roi', namespace):
+                image_zposition = roi.find('ns:imageZposition', namespace)
+                if image_zposition is None:
+                    continue
+                image_zposition = image_zposition.text
+                edge_maps = roi.findall('ns:edgeMap', namespace)
+                if not edge_maps:
+                    continue
+                xs, ys = [], []
+                edge_points = []
+                for edge in edge_maps:
+                    x = float(edge.find('ns:xCoord', namespace).text)
+                    y = float(edge.find('ns:yCoord', namespace).text)
+                    xs.append(x)
+                    ys.append(y)
+                    edge_points.append([x, y])
+                center_x = sum(xs) / len(xs)
+                center_y = sum(ys) / len(ys)
+                image_sop_uid = roi.find('ns:imageSOP_UID', namespace).text
+                filename = sopuid_to_filename.get(image_sop_uid)
+                malignancy = None
+                characteristics = nodule.find('ns:characteristics', namespace)
+                if characteristics is not None:
+                    malignancy_elem = characteristics.find('ns:malignancy', namespace)
+                    if malignancy_elem is not None:
+                        malignancy = int(malignancy_elem.text)
+                nodules.append({
+                    "doctor_id": doctor_id,
+                    "imageZposition": image_zposition,
+                    "center": [center_x, center_y],
+                    "edge_points": edge_points,
+                    "imageSOP_UID": image_sop_uid,
+                    "filename": filename,
+                    "malignancy": malignancy
+                })
     return nodules
 
 def euclidean_distance(c1, c2):
@@ -74,6 +75,7 @@ def cluster_nodules(nodules, distance_threshold=30):
                 if euclidean_distance(n['center'], group['centers'][0]) < distance_threshold:
                     group['centers'].append(n['center'])
                     group['malignancies'].append(n['malignancy'])
+                    group['edge_points_list'].append(n['edge_points'])
                     found = True
                     break
             if not found:
@@ -82,7 +84,8 @@ def cluster_nodules(nodules, distance_threshold=30):
                     "imageZposition": n['imageZposition'],
                     "filename": n['filename'],
                     "centers": [n['center']],
-                    "malignancies": [n['malignancy']]
+                    "malignancies": [n['malignancy']],
+                    "edge_points_list": [n['edge_points']]
                 })
         for group in grouped:
             avg_center = [
@@ -93,11 +96,16 @@ def cluster_nodules(nodules, distance_threshold=30):
                 len([m for m in group['malignancies'] if m is not None])
                 if any(m is not None for m in group['malignancies']) else None
             )
+            # 合并所有边缘点
+            all_edge_points = []
+            for edge_points in group['edge_points_list']:
+                all_edge_points.extend(edge_points)
             clusters.append({
                 "imageSOP_UID": sop_uid,
                 "imageZposition": group['imageZposition'],
                 "filename": group['filename'],
                 "center": avg_center,
+                "edge_points": all_edge_points,
                 "malignancy": avg_malignancy
             })
     return clusters
@@ -107,7 +115,7 @@ if __name__ == "__main__":
     root_dir = r"D:\MyFile\LIDC-IDRI"
     for case_folder in os.listdir(root_dir):
         # 跳过前1006个文件夹
-        if a <= 1006:
+        if a <= 950:
             a += 1
             continue
         case_path = os.path.join(root_dir, case_folder)
@@ -130,7 +138,7 @@ if __name__ == "__main__":
             continue
         nodules = parse_nodules(xml_file, sopuid_to_filename)
         clusters = cluster_nodules(nodules, distance_threshold=10)
-        output_json = os.path.join(case_path, "nodule_summary.json")
+        output_json = os.path.join(case_path, "nodule_summary_new.json")
         with open(output_json, "w", encoding="utf-8") as f:
             json.dump(clusters, f, ensure_ascii=False, indent=2)
         print(f"已保存: {output_json}")

@@ -4,6 +4,7 @@ import pydicom
 from PIL import Image, ImageDraw
 from collections import defaultdict
 import numpy as np
+import time
 
 def dcm_to_pil_image(dcm_path, window_center=-600, window_width=1600):
     dcm = pydicom.dcmread(dcm_path)
@@ -35,14 +36,19 @@ def draw_nodules_on_image(dicom_path, centers, output_path, window_center=-600, 
 if __name__ == "__main__":
     root_dir = r"D:\MyFile\LIDC-IDRI"
     all_null_filenames = []
+    a = 1
     for case_folder in os.listdir(root_dir):
+        # 跳过前 125
+        if a <= 760:
+            a += 1
+            continue
         case_path = os.path.join(root_dir, case_folder)
         if not (case_folder.startswith("LIDC-IDRI-") and os.path.isdir(case_path)):
             continue
-        summary_json = os.path.join(case_path, "nodule_summary.json")
-        if not os.path.exists(summary_json):
-            print(f"跳过: {case_folder}（无nodule_summary.json）")
-            continue
+        summary_json = os.path.join(case_path, "nodule_summary_new.json")
+        while not os.path.exists(summary_json):
+            print(f"等待: {case_folder}（无nodule_summary.json），正在等待文件生成...")
+            time.sleep(1)
         output_folder = os.path.join(case_path, "nodule_center_vis")
         os.makedirs(output_folder, exist_ok=True)
         with open(summary_json, "r", encoding="utf-8") as f:
@@ -63,7 +69,7 @@ if __name__ == "__main__":
             if not os.path.exists(dicom_path):
                 print(f"未找到DICOM文件: {dicom_path}")
                 continue
-            output_path = os.path.join(output_folder, f"image_{idx}_{filename}.png")
+            output_path = os.path.join(output_folder, f"New_image_{idx}_{filename}.png")
             draw_nodules_on_image(dicom_path, centers, output_path)
             print(f"已保存: {output_path}")
     if all_null_filenames:

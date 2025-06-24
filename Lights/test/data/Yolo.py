@@ -37,7 +37,7 @@ def process_all_cases(root_dir, out_dir):
         case_path = os.path.join(root_dir, case_folder)
         if not (case_folder.startswith("LIDC-IDRI-") and os.path.isdir(case_path)):
             continue
-        summary_json = os.path.join(case_path, "nodule_summary.json")
+        summary_json = os.path.join(case_path, "nodule_summary_new.json")
         if not os.path.exists(summary_json):
             continue
         with open(summary_json, "r", encoding="utf-8") as f:
@@ -70,5 +70,5 @@ def process_all_cases(root_dir, out_dir):
 
 if __name__ == "__main__":
     root_dir = r"D:\MyFile\LIDC-IDRI"
-    out_dir = r"D:\MyFile\qq_3045834499\New"
+    out_dir = r"D:\MyFile\qq_3045834499\NewMoreJPG"
     process_all_cases(root_dir, out_dir)
