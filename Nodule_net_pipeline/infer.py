@@ -64,7 +64,7 @@ def inference_single_image(model, img_path, device):
     # 额外得到检测框
     detections = model.detections.cpu().numpy() if hasattr(model, 'detections') else None
 
-    return detections, pred_mask, origin, spacing, img_proc
+    return detections, pred_mask, origin, spacing, img
 
 def save_results(out_dir, pid, detections, mask):
     os.makedirs(out_dir, exist_ok=True)
@@ -84,11 +84,12 @@ def main_inference(model_weight_path, test_img_path, output_dir):
 
     # 单张推理
     pid = os.path.basename(test_img_path).replace('.mhd', '')
-    detections, mask, origin, spacing, img_proc = inference_single_image(model, test_img_path, device)
+    detections, mask, origin, spacing, img = inference_single_image(model, test_img_path, device)
 
     # 保存结果
-    save_results(output_dir, pid, img_proc[0], mask)
-    print(img_proc[0].shape)
+    print(f"mask shape{mask.shape}, img shape{img.shape}")
+    save_results(output_dir, pid, img, mask)
+
     print(f'Inference done for {pid}, results saved to {output_dir}')
 
 if __name__ == '__main__':
