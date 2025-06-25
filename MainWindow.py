@@ -87,5 +87,5 @@ class Ui_MainWindow(object):
         self.pushButton.setText(_translate("MainWindow", "生成numpy"))
         self.pushButton_4.setText(_translate("MainWindow", "打开numpy文件"))
         self.pushButton_5.setText(_translate("MainWindow", "预测"))
-        self.pushButton_6.setText(_translate("MainWindow", "准确度分析"))
+        self.pushButton_6.setText(_translate("MainWindow", "生成3D模型"))
         self.pushButton_7.setText(_translate("MainWindow", "退出"))

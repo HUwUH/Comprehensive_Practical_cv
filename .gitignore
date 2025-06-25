@@ -3,9 +3,11 @@
 
 # IntelliJ project files
 .idea
-.vscode
 *.iml
 out
 gen
 *.pyc
 *.npy
+Lights/test/nodule_contours
+/Lights/test/Nothing/
+Nodule_net_pipeline/test

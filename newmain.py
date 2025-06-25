@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
-
+import re
 import cv2
 import numpy as np
 import pydicom
@@ -15,6 +15,13 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QProgressDialog, QDialog, QVBoxLayout, QHBoxLayout, QPushButton
 from MainWindow import Ui_MainWindow  # 替换为你的UI文件名
 from ultralytics import YOLO
+
+from Nodule_net_pipeline.infer import main_inference
+from Nodule_net_pipeline.test_pipeline import preprocess_pipeline
+from interface import get_dcm_numpy, convert_to_mm_physical_space
+from twoinone import apply_red_mask
+import open3d as o3d
+
 
 class ZoomDialog(QDialog):
     """自定义放大对话框，用于显示放大的图像"""
@@ -414,6 +421,10 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
             QMessageBox.information(self, "发送地址", f"已发送文件夹地址到后端:\n{self.current_folder}")
             # 这里可以添加实际的后端通信代码
             print(f"发送文件夹地址: {self.current_folder}")
+            orinpypath,orinpyinfo = get_dcm_numpy(self.current_folder)
+            print(f"保存原文件路径：{orinpypath}")
+            print(f"元信息0：{orinpyinfo[0]}")
+            convert_to_mm_physical_space(orinpypath, orinpyinfo)
 
         else:
             QMessageBox.warning(self, "无选择", "请先选择文件或文件夹!")
@@ -427,11 +438,12 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
             try:
                 # 加载numpy数据
                 self.current_numpy_data = np.load(file)
+                #print(np.max(self.current_numpy_data))
 
                 # 检查数据维度
-                if len(self.current_numpy_data.shape) != 3:
-                    QMessageBox.warning(self, "数据格式错误", "需要3D numpy数组!")
-                    return
+                #if len(self.current_numpy_data.shape) != 3:
+                #    QMessageBox.warning(self, "数据格式错误", "需要3D numpy数组!")
+                #    return
 
                 # 初始化视角点为中心位置
                 self.viewpoint = [
@@ -444,7 +456,7 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.update_three_views()
 
                 # 创建3D模型
-                self.create_3d_model()
+                #self.create_3d_model()
 
                 self.statusbar.showMessage(f"已加载numpy文件: {file}", 5000)
 
@@ -452,7 +464,7 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
                 QMessageBox.critical(self, "加载错误", f"无法加载numpy文件:\n{str(e)}")
 
     def create_3d_model(self):
-        """创建3D模型并显示在视图4中"""
+        """创建优化的3D模型并显示在视图4中，支持多种形状和数据类型"""
         if self.current_numpy_data is None:
             return
 
@@ -460,72 +472,273 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         progress = QProgressDialog("创建3D模型...", "取消", 0, 100, self)
         progress.setWindowModality(QtCore.Qt.WindowModal)
         progress.setWindowTitle("3D重建")
-        progress.setValue(10)
+        progress.setValue(5)
         QtWidgets.QApplication.processEvents()
 
         try:
-            # 使用Marching Cubes算法提取等值面
-            # 为了性能，我们可以对数据进行降采样
-            downsampling_factor = 2 if max(self.current_numpy_data.shape) > 256 else 1
-
-            # 准备降采样后的数据
-            data = self.current_numpy_data[::downsampling_factor,
-                   ::downsampling_factor,
-                   ::downsampling_factor]
-
-            progress.setValue(30)
+            # 步骤1: 准备数据
+            progress.setLabelText("准备数据...")
+            progress.setValue(10)
             QtWidgets.QApplication.processEvents()
 
-            # 提取等值面 - 使用中值作为阈值
-            threshold = np.median(data)
-            verts, faces, _, _ = measure.marching_cubes(data, level=threshold)
+            if progress.wasCanceled():
+                return
 
-            progress.setValue(70)
+            # 自动确定下采样因子
+            max_dim = max(self.current_numpy_data.shape[:3])
+            downsampling_factor = 1
+            if max_dim > 300:
+                downsampling_factor = 2
+            if max_dim > 600:
+                downsampling_factor = 3
+
+            # 步骤2: 处理不同形状和数据类型
+            progress.setLabelText("处理数据格式...")
+            progress.setValue(20)
             QtWidgets.QApplication.processEvents()
 
-            # 创建3D网格
-            mesh = Poly3DCollection(verts[faces], alpha=0.3)
-            mesh.set_edgecolor('k')
-            mesh.set_facecolor([0.45, 0.45, 0.75])  # 设置表面颜色
+            # 检查数据形状和类型
+            shape = self.current_numpy_data.shape
+            dtype = self.current_numpy_data.dtype
+            print(f"Processing shape: {shape}, dtype: {dtype}")
+
+            # 处理4D彩色数据 (420,420,350,3)
+            if len(shape) == 4 and shape[3] == 3:
+                # 下采样数据
+                data = self.current_numpy_data[::downsampling_factor,
+                       ::downsampling_factor,
+                       ::downsampling_factor, :]
+
+                # 转换为灰度强度用于表面提取
+                intensity = np.dot(data[..., :3], [0.299, 0.587, 0.114])
+                intensity = intensity.astype(np.float32) / 255.0  # 归一化
+                has_color = True
+
+            # 处理3D灰度数据 (420,420,350) 或 (332,360,360)
+            elif len(shape) == 3:
+                # 下采样数据
+                data = self.current_numpy_data[::downsampling_factor,
+                       ::downsampling_factor,
+                       ::downsampling_factor]
+
+                # 根据数据类型进行归一化
+                if dtype == np.uint8:
+                    intensity = data.astype(np.float32) / 255.0
+                elif dtype == np.float32:
+                    # 归一化到0-1范围
+                    min_val = np.min(data)
+                    max_val = np.max(data)
+                    intensity = (data - min_val) / (max_val - min_val)
+                else:
+                    # 对于其他数据类型，尝试转换为float32
+                    intensity = data.astype(np.float32)
+                    min_val = np.min(intensity)
+                    max_val = np.max(intensity)
+                    if max_val > min_val:
+                        intensity = (intensity - min_val) / (max_val - min_val)
+                has_color = False
+            else:
+                QMessageBox.warning(self, "数据格式错误",
+                                    f"不支持的数据形状: {shape}\n"
+                                    "支持的形状: (w,h,d) 或 (w,h,d,3)")
+                self.update_position_display()
+                return
+
+            # 确保没有 NaN 或 Inf
+            if np.any(np.isnan(intensity)) or np.any(np.isinf(intensity)):
+                # 替换无效值为0
+                intensity = np.nan_to_num(intensity, nan=0.0, posinf=0.0, neginf=0.0)
+
+            # 步骤3: 提取网格
+            progress.setLabelText("提取表面...")
+            progress.setValue(40)
+            QtWidgets.QApplication.processEvents()
+
+            if progress.wasCanceled():
+                return
+
+            # 动态确定阈值（基于数据分布）
+            hist, bins = np.histogram(intensity.flatten(), bins=50)
+            peak_value = bins[np.argmax(hist)]
+            threshold = peak_value * 0.7  # 经验值调整
+            print(f"Using threshold: {threshold:.4f}")
+
+            # 使用Marching Cubes提取网格
+            try:
+                verts, faces, _, _ = measure.marching_cubes(
+                    intensity,
+                    level=threshold,
+                    allow_degenerate=False
+                )
+            except Exception as e:
+                # 尝试使用不同的阈值策略
+                print(f"Marching cubes failed: {str(e)}. Trying alternative threshold...")
+                threshold = np.percentile(intensity, 75)  # 使用75%分位数
+                verts, faces, _, _ = measure.marching_cubes(
+                    intensity,
+                    level=threshold,
+                    allow_degenerate=False
+                )
+
+            # 检查提取的顶点是否有效
+            if len(verts) == 0:
+                raise ValueError("无法提取有效表面 - 尝试调整阈值")
+
+            print(f"Extracted mesh: {len(verts)} vertices, {len(faces)} faces")
+
+            # 步骤4: 创建Open3D网格对象
+            progress.setLabelText("创建网格...")
+            progress.setValue(60)
+            QtWidgets.QApplication.processEvents()
+
+            if progress.wasCanceled():
+                return
+
+            mesh = o3d.geometry.TriangleMesh()
+            mesh.vertices = o3d.utility.Vector3dVector(verts)
+            mesh.triangles = o3d.utility.Vector3iVector(faces)
+
+            # 添加颜色（如果原始数据是RGB）
+            if has_color:
+                vertex_indices = np.floor(verts).astype(int)
+                # 确保索引在范围内
+                vertex_indices[:, 0] = np.clip(vertex_indices[:, 0], 0, data.shape[0] - 1)
+                vertex_indices[:, 1] = np.clip(vertex_indices[:, 1], 0, data.shape[1] - 1)
+                vertex_indices[:, 2] = np.clip(vertex_indices[:, 2], 0, data.shape[2] - 1)
+
+                vertex_colors = data[
+                                    vertex_indices[:, 0],
+                                    vertex_indices[:, 1],
+                                    vertex_indices[:, 2]
+                                ] / 255.0
+                mesh.vertex_colors = o3d.utility.Vector3dVector(vertex_colors)
+            else:
+                # 对于灰度数据，使用伪彩色（基于Z坐标）
+                z_values = verts[:, 2]
+                min_z = np.min(z_values)
+                max_z = np.max(z_values)
+
+                # 使用viridis色图
+                cmap = plt.get_cmap('viridis')
+                normalized_z = (z_values - min_z) / (max_z - min_z)
+                colors = cmap(normalized_z)[:, :3]  # 只取RGB，忽略alpha
+
+                mesh.vertex_colors = o3d.utility.Vector3dVector(colors)
+
+            # 步骤5: 网格优化
+            progress.setLabelText("优化网格...")
+            progress.setValue(75)
+            QtWidgets.QApplication.processEvents()
+
+            if progress.wasCanceled():
+                return
+
+            # 自动确定目标三角形数量
+            original_triangles = len(faces)
+            target_triangles = min(max(10000, original_triangles // 20), 50000)
+            print(f"Original triangles: {original_triangles}, target: {target_triangles}")
+
+            # 简化网格
+            if original_triangles > 10000:
+                mesh = mesh.simplify_quadric_decimation(target_triangles)
+
+            # 计算法线
+            mesh.compute_vertex_normals()
+
+            # 平滑处理
+            if original_triangles > 5000:
+                mesh = mesh.filter_smooth_taubin(number_of_iterations=3)
+
+            # 步骤6: 在Matplotlib中可视化
+            progress.setLabelText("渲染模型...")
+            progress.setValue(90)
+            QtWidgets.QApplication.processEvents()
+
+            if progress.wasCanceled():
+                return
 
             # 清除视图4并创建3D轴
             self.fig4.clf()
             self.ax4 = self.fig4.add_subplot(111, projection='3d')
 
-            # 添加网格到轴
-            self.ax4.add_collection3d(mesh)
+            # 获取顶点和三角形
+            verts = np.asarray(mesh.vertices)
+            faces = np.asarray(mesh.triangles)
+            colors = np.asarray(mesh.vertex_colors)
 
-            # 设置轴限制
-            self.ax4.set_xlim(0, data.shape[0])
-            self.ax4.set_ylim(0, data.shape[1])
-            self.ax4.set_zlim(0, data.shape[2])
+            # 确保顶点数据有效（修复NaN/Inf问题）
+            if np.any(np.isnan(verts)) or np.any(np.isinf(verts)):
+                # 替换无效顶点为0
+                verts = np.nan_to_num(verts, nan=0.0, posinf=0.0, neginf=0.0)
+
+            # 创建Poly3DCollection
+            mesh_collection = Poly3DCollection(
+                verts[faces],
+                facecolors=colors[faces[:, 0]] if len(colors) > 0 else [0.45, 0.45, 0.75],
+                edgecolor='none',
+                alpha=0.8
+            )
+
+            # 添加网格到轴
+            self.ax4.add_collection3d(mesh_collection)
+
+            # 设置轴限制（确保没有NaN/Inf）
+            min_coords = np.nanmin(verts, axis=0)
+            max_coords = np.nanmax(verts, axis=0)
+
+            # 如果所有值都无效，使用默认范围
+            if np.any(np.isnan(min_coords)) or np.any(np.isnan(max_coords)):
+                min_coords = np.zeros(3)
+                max_coords = np.array([intensity.shape[0], intensity.shape[1], intensity.shape[2]])
+
+            # 添加10%的边距
+            margin = 0.1 * (max_coords - min_coords)
+            min_coords -= margin
+            max_coords += margin
+
+            self.ax4.set_xlim(min_coords[0], max_coords[0])
+            self.ax4.set_ylim(min_coords[1], max_coords[1])
+            self.ax4.set_zlim(min_coords[2], max_coords[2])
 
             # 设置轴标签
             self.ax4.set_xlabel('X')
             self.ax4.set_ylabel('Y')
             self.ax4.set_zlabel('Z')
-            self.ax4.set_title('3D重建模型')
+            self.ax4.set_title(f'3D重建模型 (三角形: {len(faces):,})')
 
             # 设置初始视角
-            self.ax4.view_init(elev=30, azim=45)
+            self.ax4.view_init(elev=25, azim=45)
 
-            progress.setValue(90)
-            QtWidgets.QApplication.processEvents()
+            # 添加光源
+            self.ax4.grid(False)
+            self.ax4.xaxis.pane.fill = False
+            self.ax4.yaxis.pane.fill = False
+            self.ax4.zaxis.pane.fill = False
 
+            # 步骤7: 绘制并完成
             self.canvas4.draw()
 
             progress.setValue(100)
-            self.statusbar.showMessage("3D模型创建完成! 使用鼠标拖拽旋转视角", 5000)
+            self.statusbar.showMessage(
+                f"3D模型创建完成! 三角形数: {len(faces):,} (原始: {original_triangles:,})",
+                5000
+            )
 
             # 存储模型数据
             self.three_d_model = {
-                'verts': verts,
-                'faces': faces,
-                'downsampling_factor': downsampling_factor
+                'mesh': mesh,
+                'downsampling_factor': downsampling_factor,
+                'threshold': threshold,
+                'original_triangles': original_triangles,
+                'simplified_triangles': len(faces)
             }
 
         except Exception as e:
-            QMessageBox.critical(self, "3D重建错误", f"创建3D模型时出错:\n{str(e)}")
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"Error in create_3d_model: {error_details}")
+            QMessageBox.critical(self, "3D重建错误",
+                                 f"创建3D模型时出错:\n{str(e)}\n\n详细错误:\n{error_details}")
             # 回退到显示位置信息
             self.update_position_display()
 
@@ -540,6 +753,7 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         # 视图1: xy平面 (z固定)
         self.ax1.clear()
         self.ax1.imshow(self.current_numpy_data[:, :, z], cmap='gray')
+        #self.ax1.imshow(self.current_numpy_data[:, :, z])
         self.ax1.set_title(f"XY平面 (Z={z})")
         self.ax1.axis('off')
         self.canvas1.draw()
@@ -602,6 +816,38 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
             return
 
         # 这里添加实际的预测逻辑
+
+        fd_input = self.current_folder
+        fd1 = "./test/mhd"
+        fd2 = "./test/lung"
+        fd3 = "./test/processed"
+        fd4 = "./test/output"
+        preprocess_pipeline(fd_input, fd1, fd2, fd3)
+        model_weight_path = 'D:/PycharmProjects/Comprehensive_Practical_cv/model/100.ckpt'
+        main_inference(model_weight_path, os.path.join(fd3, "processed_clean.nrrd"), fd4)
+        print("one completed")
+        label_dir = "./labels/"
+        use_label = False
+        match = re.search(r'LIDC-IDRI-(\d{4})', fd_input)
+        if match:
+            abcd = match.group(1)
+            label_path = os.path.join(label_dir, f'patient{abcd}_mask.nrrd')
+            if os.path.exists(label_path):
+                apply_red_mask(
+                    r'D:\PycharmProjects\Comprehensive_Practical_cv\test\output\processed_clean.nrrd_detections.npy',
+                    r'D:\PycharmProjects\Comprehensive_Practical_cv\test\output\processed_clean.nrrd_mask.npy',
+                    label_path
+                )
+                use_label = True
+            else:
+                print(f"未找到对应的label mask文件: {label_path}")
+        else:
+            print("无法从路径中提取四位数字编号")
+        if not use_label:
+            apply_red_mask(
+                r'D:\PycharmProjects\Comprehensive_Practical_cv\test\output\processed_clean.nrrd_detections.npy',
+                r'D:\PycharmProjects\Comprehensive_Practical_cv\test\output\processed_clean.nrrd_mask.npy')
+        print("completed")
         # 示例: 显示预测进度
         self.ax1.clear()
         self.ax1.text(0.5, 0.5, f"预测中...\n0/{len(self.dcm_files)}",
@@ -641,39 +887,8 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         if self.current_numpy_data is None:
             QMessageBox.warning(self, "无数据", "请先打开numpy文件!")
             return
+        self.create_3d_model()
 
-        # 选择用于比较的numpy文件
-        file, _ = QFileDialog.getOpenFileName(
-            self, "选择对比Numpy文件", "", "Numpy Files (*.npy *.npz)"
-        )
-        if file:
-            try:
-                # 加载对比数据
-                self.compare_numpy_data = np.load(file)
-
-                # 检查数据维度是否匹配
-                if self.current_numpy_data.shape != self.compare_numpy_data.shape:
-                    QMessageBox.warning(self, "维度不匹配", "两个numpy数组的维度不一致!")
-                    return
-
-                # 计算准确度指标
-                accuracy = self.calculate_accuracy()
-
-                # 显示分析结果
-                QMessageBox.information(
-                    self,
-                    "准确度分析结果",
-                    f"准确率: {accuracy['accuracy']:.2%}\n"
-                    f"召回率: {accuracy['recall']:.2%}\n"
-                    f"精确率: {accuracy['precision']:.2%}\n"
-                    f"F1分数: {accuracy['f1_score']:.2f}"
-                )
-
-                # 在视图4中显示混淆矩阵
-                self.display_confusion_matrix(accuracy['confusion_matrix'])
-
-            except Exception as e:
-                QMessageBox.critical(self, "加载错误", f"无法加载对比numpy文件:\n{str(e)}")
 
     def calculate_accuracy(self):
         """计算准确度指标（简化版）"""

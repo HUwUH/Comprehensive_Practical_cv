@@ -95,7 +95,7 @@
       <item>
        <widget class="QPushButton" name="pushButton_6">
         <property name="text">
-         <string>准确度分析</string>
+         <string>生成3D模型</string>
         </property>
        </widget>
       </item>
