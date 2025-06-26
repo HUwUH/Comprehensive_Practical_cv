@@ -15,10 +15,11 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QProgressDialog, QDialog, QVBoxLayout, QHBoxLayout, QPushButton
 from MainWindow import Ui_MainWindow  # 替换为你的UI文件名
 from ultralytics import YOLO
-
+import nibabel as nib
 from Nodule_net_pipeline.infer import main_inference
 from Nodule_net_pipeline.test_pipeline import preprocess_pipeline
 from interface import get_dcm_numpy, convert_to_mm_physical_space
+from npytonii import npy_to_nii
 from twoinone import apply_red_mask
 import open3d as o3d
 
@@ -823,7 +824,7 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         fd3 = "./test/processed"
         fd4 = "./test/output"
         preprocess_pipeline(fd_input, fd1, fd2, fd3)
-        model_weight_path = 'D:/PycharmProjects/Comprehensive_Practical_cv/model/100.ckpt'
+        model_weight_path = 'D:/PycharmProjects/Comprehensive_Practical_cv/model/200.ckpt'
         main_inference(model_weight_path, os.path.join(fd3, "processed_clean.nrrd"), fd4)
         print("one completed")
         label_dir = "./labels/"
@@ -876,7 +877,7 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
             self.canvas1.draw()
 
             # 模拟处理时间
-            QtCore.QThread.msleep(50)
+            #QtCore.QThread.msleep(50)
 
         progress.setValue(len(self.dcm_files))
 
@@ -887,8 +888,165 @@ class MainApplication(QtWidgets.QMainWindow, Ui_MainWindow):
         if self.current_numpy_data is None:
             QMessageBox.warning(self, "无数据", "请先打开numpy文件!")
             return
-        self.create_3d_model()
+        #将npy转为nii
+        npy_to_nii(r'D:\PycharmProjects\Comprehensive_Practical_cv\test\output\ans.npy',r'D:\PycharmProjects\Comprehensive_Practical_cv\test\output')
+        #展示nii
+        self.display_3d_model_in_ax4(r'D:\PycharmProjects\Comprehensive_Practical_cv\test\output\ans.npy')
 
+    def display_3d_model_in_ax4(self, npy_path, downsample_factor=5, black_threshold=0.25):
+        """
+        在视图4上显示3D RGB模型，自动去除黑色背景
+        :param npy_path: .npy文件路径
+        :param downsample_factor: 降采样因子，值越大点越少
+        :param black_threshold: 黑色阈值，RGB值都小于该值的点将被视为背景
+        """
+        try:
+            progress = QProgressDialog("加载3D模型...", "取消", 0, 100, self)
+            progress.setWindowTitle("3D模型可视化")
+            progress.setValue(10)
+            QtWidgets.QApplication.processEvents()
+
+            # 加载数据
+            progress.setLabelText("加载数据...")
+            data = np.load(npy_path)
+            progress.setValue(30)
+            QtWidgets.QApplication.processEvents()
+
+            if progress.wasCanceled():
+                return
+
+            # 验证数据形状
+            if data.ndim != 4 or data.shape[3] != 3:
+                raise ValueError("数据必须是4D数组，最后一维大小为3 (RGB)")
+
+            # 降采样以减少点数
+            progress.setLabelText("预处理数据...")
+            data = data[::downsample_factor, ::downsample_factor, ::downsample_factor, :]
+
+            # 确保RGB值在0-1范围内
+            progress.setLabelText("归一化颜色值...")
+            if np.issubdtype(data.dtype, np.integer):
+                max_val = np.iinfo(data.dtype).max
+                if max_val > 1:
+                    data = data.astype(np.float32) / max_val
+                else:
+                    data = data.astype(np.float32)
+            else:
+                if np.max(data) > 1.0 or np.min(data) < 0.0:
+                    min_val = np.min(data)
+                    max_val = np.max(data)
+                    if max_val > min_val:
+                        data = (data - min_val) / (max_val - min_val)
+
+            # 最终裁剪确保值在0-1之间
+            data = np.clip(data, 0.0, 1.0)
+
+            # 获取坐标和颜色
+            x, y, z = np.indices(data.shape[:3])
+            colors = data.reshape(-1, 3)
+
+            # 1. 创建背景掩码：RGB值都小于black_threshold的点视为背景
+            background_mask = np.all(colors < black_threshold, axis=1)
+
+            # 2. 计算颜色强度
+            intensity = np.mean(colors, axis=1)
+
+            # 3. 创建前景掩码：不是背景且强度大于0.1的点
+            foreground_mask = (~background_mask) & (intensity > 0.1)
+
+            # 应用前景掩码
+            x = x.flatten()[foreground_mask]
+            y = y.flatten()[foreground_mask]
+            z = z.flatten()[foreground_mask]
+            colors = colors[foreground_mask]
+
+            # 4. 如果前景点太少，放宽阈值条件
+            if len(colors) < 100:
+                # 尝试更宽松的前景检测
+                foreground_mask = ~background_mask
+                x = x.flatten()[foreground_mask]
+                y = y.flatten()[foreground_mask]
+                z = z.flatten()[foreground_mask]
+                colors = colors[foreground_mask]
+
+                # 如果仍然太少，放弃背景去除
+                if len(colors) < 50:
+                    x = x.flatten()
+                    y = y.flatten()
+                    z = z.flatten()
+                    colors = colors
+
+            # 清除并设置3D视图
+            self.fig4.clf()
+            self.ax4 = self.fig4.add_subplot(111, projection='3d')
+
+            # 绘制点云 - 根据点密度自动调整大小
+            progress.setLabelText("渲染点云...")
+            point_size = max(1, min(50, 1000 // len(colors)))  # 自适应点大小
+
+            self.scatter_plot = self.ax4.scatter(
+                x, y, z,
+                c=colors,
+                marker='o',
+                s=point_size,
+                alpha=0.7,  # 增加透明度使内部可见
+                depthshade=False
+            )
+
+            # 设置标签和标题
+            self.ax4.set_xlabel('X')
+            self.ax4.set_ylabel('Y')
+            self.ax4.set_zlabel('Z')
+            self.ax4.set_title(f'3D模型可视化: {os.path.basename(npy_path)}')
+
+            # 自动调整坐标范围以匹配数据
+            if len(x) > 0:
+                x_min, x_max = np.min(x), np.max(x)
+                y_min, y_max = np.min(y), np.max(y)
+                z_min, z_max = np.min(z), np.max(z)
+
+                # 添加10%的边距
+                x_margin = max(1, (x_max - x_min) * 0.1)
+                y_margin = max(1, (y_max - y_min) * 0.1)
+                z_margin = max(1, (z_max - z_min) * 0.1)
+
+                self.ax4.set_xlim(x_min - x_margin, x_max + x_margin)
+                self.ax4.set_ylim(y_min - y_margin, y_max + y_margin)
+                self.ax4.set_zlim(z_min - z_margin, z_max + z_margin)
+            else:
+                # 如果没有点，设置默认范围
+                self.ax4.set_xlim(0, data.shape[0])
+                self.ax4.set_ylim(0, data.shape[1])
+                self.ax4.set_zlim(0, data.shape[2])
+
+            # 设置初始视角
+            self.ax4.view_init(elev=30, azim=45)
+
+            # 绘制
+            progress.setValue(80)
+            QtWidgets.QApplication.processEvents()
+            self.canvas4.draw()
+            progress.setValue(100)
+
+            self.statusbar.showMessage(f"成功加载3D模型，显示{len(colors)}个点", 5000)
+
+            # 添加视图交互提示
+            self.statusbar.showMessage("使用鼠标拖拽旋转视图，滚轮缩放", 3000)
+
+        except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            QMessageBox.critical(self, "错误",
+                                 f"加载3D模型时出错:\n{str(e)}\n\n{error_details}")
+
+    def clear_3d_view(self):
+        """清除视图4的3D模型"""
+        if hasattr(self, 'fig4') and hasattr(self, 'ax4'):
+            self.fig4.clf()
+            self.ax4 = self.fig4.add_subplot(111, projection='3d')
+            self.ax4.set_title('3D模型视图')
+            self.ax4.set_axis_off()  # 隐藏坐标轴
+            self.canvas4.draw()
 
     def calculate_accuracy(self):
         """计算准确度指标（简化版）"""

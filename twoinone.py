@@ -23,7 +23,9 @@ def apply_red_mask(img, mask, label_mask=None):
     # 检查输入形状是否一致
     assert img.shape == mask.shape, f"img 和 mask 的形状不一致: img {img.shape}, mask {mask.shape}"
     if label_mask is not None:
-        assert img.shape == label_mask.shape, f"img 和 label_mask 的形状不一致: img {img.shape}, label_mask {label_mask.shape}"
+        if not img.shape == label_mask.shape:
+            print(f"img 和 label_mask 的形状不一致: img {img.shape}, label_mask {label_mask.shape}")
+            label_mask = None
 
     # 创建三通道输出图像
     output = np.zeros((img.shape[0], img.shape[1], img.shape[2], 3)).astype(np.uint8)
