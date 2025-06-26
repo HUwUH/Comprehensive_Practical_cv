@@ -10,3 +10,4 @@ gen
 *.npy
 Lights/test/nodule_contours
 /Lights/test/Nothing/
+Nodule_net_pipeline/test
